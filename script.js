@@ -2,11 +2,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- URL Parsing for Referral ---
     const urlParams = new URLSearchParams(window.location.search);
     const refCode = urlParams.get('ref');
+    const vipLevel = urlParams.get('vip');
     
     if (refCode) {
         document.getElementById('register-section').style.display = 'block';
         document.getElementById('download-section').style.display = 'none';
         document.getElementById('regRefCode').value = refCode;
+
+        if (vipLevel) {
+            const noticeBox = document.getElementById('vipNotice');
+            noticeBox.style.display = 'block';
+            noticeBox.innerHTML = `⚠️ এটি একটি VIP ${vipLevel} রেফারেল লিংক!<br><br>অ্যাকাউন্ট খোলার পর আপনাকে অবশ্যই VIP ${vipLevel} প্যাকেজটি কিনতে হবে। অন্যথায় এই লিংকের মালিক টাকা উইথড্র করতে পারবেন না।<br>Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="color: #00e5ff;">+8801822246645</a>`;
+        }
     }
 
     // --- Language Toggle Logic ---
