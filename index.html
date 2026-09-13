@@ -55,11 +55,45 @@
                 </div>
             </div>
 
-            <a href="./RichKidsApp_v1.0.0_release.apk" download class="download-btn">
-                <i class="fa-brands fa-android"></i>
-                <span class="en">Download APK Now</span>
-                <span class="bn hide">অ্যাপটি ডাউনলোড করুন</span>
-            </a>
+            <div id="register-section" style="display: none;" class="glass-panel form-panel">
+                <h2 class="en">Create Account</h2>
+                <h2 class="bn hide">অ্যাকাউন্ট তৈরি করুন</h2>
+                <p class="en form-desc">Fill in your details below to join your inviter.</p>
+                <p class="bn hide form-desc">নিচের তথ্যগুলো পূরণ করে আপনার ইনভাইটারের সাথে যুক্ত হোন।</p>
+                
+                <form id="registrationForm" onsubmit="handleRegistration(event)">
+                    <div class="input-group">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="regName" placeholder="Full Name (পূর্ণ নাম)" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-phone"></i>
+                        <input type="tel" id="regPhone" placeholder="Phone Number (ফোন নাম্বার)" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="regPassword" placeholder="Password (পাসওয়ার্ড)" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fa-solid fa-gift" style="color: #FFD700;"></i>
+                        <input type="text" id="regRefCode" placeholder="Referral Code" readonly style="color: #FFD700; font-weight: bold; background: rgba(0,0,0,0.5);">
+                    </div>
+                    
+                    <button type="submit" id="regSubmitBtn" class="submit-btn">
+                        <span class="en">Create Account</span>
+                        <span class="bn hide">অ্যাকাউন্ট খুলুন</span>
+                    </button>
+                    <p id="regMessage" style="margin-top: 10px; font-weight: bold; font-size: 14px; text-align: center;"></p>
+                </form>
+            </div>
+
+            <div id="download-section">
+                <a href="./RichKidsApp_v1.0.0_release.apk" download class="download-btn">
+                    <i class="fa-brands fa-android"></i>
+                    <span class="en">Download APK Now</span>
+                    <span class="bn hide">অ্যাপটি ডাউনলোড করুন</span>
+                </a>
+            </div>
         </section>
 
         <!-- Tutorials Section -->

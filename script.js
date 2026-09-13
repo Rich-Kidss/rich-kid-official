@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- URL Parsing for Referral ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    
+    if (refCode) {
+        document.getElementById('register-section').style.display = 'block';
+        document.getElementById('download-section').style.display = 'none';
+        document.getElementById('regRefCode').value = refCode;
+    }
+
     // --- Language Toggle Logic ---
     let currentLang = 'en';
     const langBtn = document.getElementById('langToggle');
@@ -77,3 +87,103 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fetchVideos();
 });
+
+// --- Registration Logic ---
+const FIREBASE_USERS_URL = 'https://richkids-92da5-default-rtdb.firebaseio.com/users.json';
+
+async function handleRegistration(event) {
+    event.preventDefault();
+    const btn = document.getElementById('regSubmitBtn');
+    const msg = document.getElementById('regMessage');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    msg.textContent = 'Processing... Please wait.';
+    msg.style.color = '#FFD700';
+
+    const name = document.getElementById('regName').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const refCode = document.getElementById('regRefCode').value.trim();
+
+    try {
+        const res = await fetch(FIREBASE_USERS_URL);
+        const usersData = await res.json() || {};
+        
+        let phoneExists = false;
+        let referrerId = null;
+        let referrerKey = null;
+        let referrer = null;
+
+        for (const [key, user] of Object.entries(usersData)) {
+            if (user.phone === phone) {
+                phoneExists = true;
+                break;
+            }
+            if (refCode && user.uniqueId === refCode) {
+                referrerId = user.uniqueId;
+                referrerKey = key;
+                referrer = user;
+            }
+        }
+
+        if (phoneExists) {
+            msg.textContent = 'Phone number already registered! Download app and Login.';
+            msg.style.color = '#ef4444';
+            document.getElementById('download-section').style.display = 'block';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            return;
+        }
+
+        const uniqueId = 'EP-' + Math.floor(100000 + Math.random() * 900000);
+        const id = 'usr_' + Date.now() + Math.floor(Math.random() * 1000);
+        
+        const newUser = {
+            id: id,
+            uniqueId: uniqueId,
+            name: name,
+            phone: phone,
+            password: password,
+            avatarUrl: 'https://api.dicebear.com/7.x/bottts/svg?seed=EarnPay',
+            balance: 0.0,
+            vipLevel: 0,
+            isVIPActive: false,
+            referralCode: uniqueId,
+            referredBy: referrerId,
+            referrals: [],
+            activeReferralCount: 0,
+            successfulWithdrawalCount: 0,
+            isBanned: false,
+            suspiciousActivity: false,
+            completedTaskIds: [],
+            createdAt: new Date().toISOString()
+        };
+
+        await fetch('https://richkids-92da5-default-rtdb.firebaseio.com/users/' + id + '.json', {
+            method: 'PUT',
+            body: JSON.stringify(newUser)
+        });
+
+        if (referrerKey) {
+            let refs = referrer.referrals || [];
+            refs.push(uniqueId);
+            await fetch('https://richkids-92da5-default-rtdb.firebaseio.com/users/' + referrerKey + '/referrals.json', {
+                method: 'PUT',
+                body: JSON.stringify(refs)
+            });
+        }
+
+        msg.textContent = 'Account Created Successfully! Download the App below and Login.';
+        msg.style.color = '#10b981'; // Green
+        document.getElementById('register-section').style.display = 'none';
+        document.getElementById('download-section').style.display = 'block';
+        
+    } catch (e) {
+        console.error(e);
+        msg.textContent = 'Network error. Please try again.';
+        msg.style.color = '#ef4444';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }
+}
+

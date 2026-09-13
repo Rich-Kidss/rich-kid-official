@@ -281,3 +281,13 @@ body {
         align-items: center;
     }
 }
+
+/* Form Styles */
+.form-panel { max-width: 500px; margin: 0 auto 30px; text-align: left; }
+.form-desc { color: var(--text-muted); margin-bottom: 20px; font-size: 0.95rem; text-align: center; }
+.input-group { position: relative; margin-bottom: 15px; }
+.input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+.input-group input { width: 100%; padding: 15px 15px 15px 45px; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 12px; color: white; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.3s; }
+.input-group input:focus { border-color: var(--primary); }
+.submit-btn { width: 100%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: transform 0.3s; box-shadow: 0 5px 15px rgba(138,43,226,0.4); margin-top: 10px; }
+.submit-btn:hover { transform: translateY(-2px); }
