@@ -113,23 +113,28 @@ async function handleRegistration(event) {
     const refCode = document.getElementById('regRefCode').value.trim();
 
     try {
-        const res = await fetch(FIREBASE_USERS_URL);
-        const usersData = await res.json() || {};
-        
         let phoneExists = false;
         let referrerId = null;
         let referrerKey = null;
         let referrer = null;
 
-        for (const [key, user] of Object.entries(usersData)) {
-            if (user.phone === phone) {
-                phoneExists = true;
-                break;
-            }
-            if (refCode && user.uniqueId === refCode) {
-                referrerId = user.uniqueId;
-                referrerKey = key;
-                referrer = user;
+        // 1. Check if phone exists (REST API Query)
+        const phoneRes = await fetch(`${FIREBASE_USERS_URL}?orderBy="phone"&equalTo="${phone}"`);
+        const phoneData = await phoneRes.json();
+        
+        if (phoneData && Object.keys(phoneData).length > 0 && phoneData.error === undefined) {
+            phoneExists = true;
+        }
+
+        // 2. Fetch referrer data if refCode is provided
+        if (refCode) {
+            const refRes = await fetch(`${FIREBASE_USERS_URL}?orderBy="uniqueId"&equalTo="${refCode}"`);
+            const refData = await refRes.json();
+            
+            if (refData && Object.keys(refData).length > 0 && refData.error === undefined) {
+                referrerKey = Object.keys(refData)[0];
+                referrer = refData[referrerKey];
+                referrerId = referrer.uniqueId;
             }
         }
 
