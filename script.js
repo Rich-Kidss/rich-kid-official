@@ -12,7 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (vipLevel) {
             const noticeBox = document.getElementById('vipNotice');
             noticeBox.style.display = 'block';
-            noticeBox.innerHTML = `⚠️ এটি একটি VIP ${vipLevel} রেফারেল লিংক!<br><br>অ্যাকাউন্ট খোলার পর আপনাকে অবশ্যই VIP ${vipLevel} প্যাকেজটি কিনতে হবে। অন্যথায় এই লিংকের মালিক টাকা উইথড্র করতে পারবেন না।<br>Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="color: #00e5ff;">+8801822246645</a>`;
+            noticeBox.innerHTML = `⚠️ এটি একটি VIP ${vipLevel} রেফারেল লিংক!<br><br>
+✅ অ্যাকাউন্ট খোলার পর আপনাকে অবশ্যই <b>VIP ${vipLevel} বা তার চেয়ে বড় প্যাকেজ</b> কিনতে হবে।<br>
+❌ শুধু অ্যাকাউন্ট খুললেই রেফার count হবে না — VIP package কিনলে তবেই রেফার সম্পন্ন হবে।<br><br>
+Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="color: #00e5ff;">+8801822246645</a>`;
         }
     }
 
@@ -176,14 +179,10 @@ async function handleRegistration(event) {
             body: JSON.stringify(newUser)
         });
 
-        if (referrerKey) {
-            let refs = referrer.referrals || [];
-            refs.push(uniqueId);
-            await fetch('https://richkids-92da5-default-rtdb.firebaseio.com/users/' + referrerKey + '/referrals.json', {
-                method: 'PUT',
-                body: JSON.stringify(refs)
-            });
-        }
+        // NOTE: We do NOT update referrer's referrals list here.
+        // Referral is ONLY counted when admin approves the deposit
+        // AND the referred user's VIP level >= referrer's VIP level.
+        // This prevents fake account abuse.
 
         msg.textContent = 'Account Created Successfully! Download the App below and Login.';
         msg.style.color = '#10b981'; // Green
