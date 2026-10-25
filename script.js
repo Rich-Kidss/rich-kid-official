@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const noticeBox = document.getElementById('vipNotice');
             noticeBox.style.display = 'block';
             noticeBox.innerHTML = `⚠️ এটি একটি VIP ${vipLevel} রেফারেল লিংক!<br><br>
-✅ অ্যাকাউন্ট খোলার পর আপনাকে অবশ্যই <b>VIP ${vipLevel} বা তার চেয়ে বড় প্যাকেজ</b> কিনতে হবে।<br>
+✅ রেফার লিংক দিয়ে অ্যাকাউন্ট করে <b>VIP প্যাকেজ</b> নিলে <b>২০% বোনাস</b> পাবেন।<br>
 ❌ শুধু অ্যাকাউন্ট খুললেই রেফার count হবে না — VIP package কিনলে তবেই রেফার সম্পন্ন হবে।<br><br>
 Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="color: #00e5ff;">+8801822246645</a>`;
         }
@@ -40,32 +40,26 @@ Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="c
     });
 
     // --- Firebase Data Fetching ---
-    // Fetching from Firebase Realtime Database via REST API
-    const FIREBASE_DB_URL = 'https://richkids-92da5-default-rtdb.firebaseio.com';
+    // Fetching from Backend REST API via Secure HTTPS
+    const API_BASE_URL = 'https://161-248-201-75.sslip.io';
     const videoContainer = document.getElementById('videoContainer');
 
     async function fetchVideos() {
         try {
             // We will fetch from a node called 'website_videos' which the admin panel will write to.
-            const response = await fetch(`${FIREBASE_DB_URL}/website_videos.json`);
+            const response = await fetch(`${API_BASE_URL}/website_videos`);
             if (!response.ok) throw new Error('Failed to fetch data');
             
-            const data = await response.json();
-            videoContainer.innerHTML = ''; // Clear loading spinner
+            const dataList = await response.json();
+            videoContainer.innerHTML = '';
 
-            if (!data) {
+            if (!dataList || dataList.length === 0) {
                 videoContainer.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No tutorials available at the moment. Please check back later!</p>';
                 return;
             }
 
-            // Convert Object to Array
-            const videos = Object.keys(data).map(key => ({
-                id: key,
-                ...data[key]
-            }));
-
-            // Sort by timestamp (newest first) if available
-            videos.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            // Already an array from REST API
+            const videos = dataList.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
             videos.forEach(video => {
                 // Ensure it's a valid YouTube embed URL
@@ -99,7 +93,7 @@ Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="c
 });
 
 // --- Registration Logic ---
-const FIREBASE_USERS_URL = 'https://richkids-92da5-default-rtdb.firebaseio.com/users.json';
+const API_BASE_URL = 'https://161-248-201-75.sslip.io';
 
 async function handleRegistration(event) {
     event.preventDefault();
@@ -122,22 +116,21 @@ async function handleRegistration(event) {
         let referrer = null;
 
         // 1. Check if phone exists (REST API Query)
-        const phoneRes = await fetch(`${FIREBASE_USERS_URL}?orderBy="phone"&equalTo="${phone}"`);
+        const phoneRes = await fetch(`${API_BASE_URL}/users/phone/${encodeURIComponent(phone)}`);
         const phoneData = await phoneRes.json();
         
-        if (phoneData && Object.keys(phoneData).length > 0 && phoneData.error === undefined) {
+        if (phoneRes.ok && phoneData && !phoneData.error) {
             phoneExists = true;
         }
 
         // 2. Fetch referrer data if refCode is provided
         if (refCode) {
-            const refRes = await fetch(`${FIREBASE_USERS_URL}?orderBy="uniqueId"&equalTo="${refCode}"`);
+            const refRes = await fetch(`${API_BASE_URL}/users/uniqueId/${encodeURIComponent(refCode)}`);
             const refData = await refRes.json();
             
-            if (refData && Object.keys(refData).length > 0 && refData.error === undefined) {
-                referrerKey = Object.keys(refData)[0];
-                referrer = refData[referrerKey];
-                referrerId = referrer.uniqueId;
+            if (refRes.ok && refData && !refData.error) {
+                referrerId = refData.uniqueId;
+                referrer = refData;
             }
         }
 
@@ -174,10 +167,20 @@ async function handleRegistration(event) {
             createdAt: new Date().toISOString()
         };
 
-        await fetch('https://richkids-92da5-default-rtdb.firebaseio.com/users/' + id + '.json', {
-            method: 'PUT',
+        const regRes = await fetch(`${API_BASE_URL}/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newUser)
         });
+
+        if (!regRes.ok) {
+            const errData = await regRes.json().catch(() => ({}));
+            msg.textContent = errData.error || 'Registration failed. Please try again.';
+            msg.style.color = '#ef4444';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            return;
+        }
 
         // NOTE: We do NOT update referrer's referrals list here.
         // Referral is ONLY counted when admin approves the deposit
