@@ -40,17 +40,16 @@ Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="c
     });
 
     // --- Firebase Data Fetching ---
-    // Fetching from Backend REST API via Secure HTTPS
-    const API_BASE_URL = 'https://161-248-201-75.sslip.io';
+    const FIREBASE_RTDB_URL = 'https://richkids-92da5-default-rtdb.firebaseio.com';
     const videoContainer = document.getElementById('videoContainer');
 
     async function fetchVideos() {
         try {
-            // We will fetch from a node called 'website_videos' which the admin panel will write to.
-            const response = await fetch(`${API_BASE_URL}/website_videos`);
+            const response = await fetch(`${FIREBASE_RTDB_URL}/website_videos.json`);
             if (!response.ok) throw new Error('Failed to fetch data');
             
-            const dataList = await response.json();
+            const rawData = await response.json();
+            const dataList = rawData ? (Array.isArray(rawData) ? rawData : Object.values(rawData)) : [];
             videoContainer.innerHTML = '';
 
             if (!dataList || dataList.length === 0) {
@@ -93,7 +92,7 @@ Customer Service: <a href="https://wa.me/8801822246645" target="_blank" style="c
 });
 
 // --- Registration Logic ---
-const API_BASE_URL = 'https://161-248-201-75.sslip.io';
+const FIREBASE_RTDB_URL = 'https://richkids-92da5-default-rtdb.firebaseio.com';
 
 async function handleRegistration(event) {
     event.preventDefault();
@@ -111,26 +110,26 @@ async function handleRegistration(event) {
 
     try {
         let phoneExists = false;
-        let referrerId = null;
-        let referrerKey = null;
-        let referrer = null;
+        let referrerId = '';
 
-        // 1. Check if phone exists (REST API Query)
-        const phoneRes = await fetch(`${API_BASE_URL}/users/phone/${encodeURIComponent(phone)}`);
-        const phoneData = await phoneRes.json();
-        
-        if (phoneRes.ok && phoneData && !phoneData.error) {
-            phoneExists = true;
+        // 1. Check if phone exists (Firebase RTDB Query)
+        const phoneRes = await fetch(`${FIREBASE_RTDB_URL}/users.json?orderBy="phone"&equalTo="${encodeURIComponent(phone)}"`);
+        if (phoneRes.ok) {
+            const phoneData = await phoneRes.json();
+            if (phoneData && Object.keys(phoneData).length > 0) {
+                phoneExists = true;
+            }
         }
 
         // 2. Fetch referrer data if refCode is provided
         if (refCode) {
-            const refRes = await fetch(`${API_BASE_URL}/users/uniqueId/${encodeURIComponent(refCode)}`);
-            const refData = await refRes.json();
-            
-            if (refRes.ok && refData && !refData.error) {
-                referrerId = refData.uniqueId;
-                referrer = refData;
+            const refRes = await fetch(`${FIREBASE_RTDB_URL}/users.json?orderBy="uniqueId"&equalTo="${encodeURIComponent(refCode.toUpperCase())}"`);
+            if (refRes.ok) {
+                const refData = await refRes.json();
+                if (refData && Object.keys(refData).length > 0) {
+                    const refUser = Object.values(refData)[0];
+                    referrerId = refUser.uniqueId || '';
+                }
             }
         }
 
@@ -167,15 +166,14 @@ async function handleRegistration(event) {
             createdAt: new Date().toISOString()
         };
 
-        const regRes = await fetch(`${API_BASE_URL}/users`, {
-            method: 'POST',
+        const regRes = await fetch(`${FIREBASE_RTDB_URL}/users/${id}.json`, {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(newUser)
         });
 
         if (!regRes.ok) {
-            const errData = await regRes.json().catch(() => ({}));
-            msg.textContent = errData.error || 'Registration failed. Please try again.';
+            msg.textContent = 'Registration failed. Please try again.';
             msg.style.color = '#ef4444';
             btn.disabled = false;
             btn.style.opacity = '1';
